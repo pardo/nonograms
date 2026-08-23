@@ -1,6 +1,4 @@
 :root {
-  --cell-size: clamp(18px, 6.2vw, 40px);
-
   --bg: #f6f5f1;
   --surface: #ffffff;
   --surface-raised: #ffffff;
@@ -55,12 +53,25 @@ body {
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
+html,
+body {
+  height: 100%;
+}
+
 #root {
-  min-height: 100vh;
+  min-height: 100dvh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 1.25rem 1rem 2.5rem;
+  padding: 1rem 1.25rem;
+}
+
+/* The menu is a normal scrolling document; let it grow past the viewport. */
+#root:has(.menu) {
+  height: auto;
+  min-height: 100dvh;
+  overflow-y: auto;
 }
 
 button {
@@ -71,7 +82,7 @@ button {
 
 .menu {
   width: 100%;
-  max-width: 960px;
+  max-width: 1200px;
 }
 
 .menu-header {
@@ -214,15 +225,17 @@ button {
 
 .play-view {
   width: 100%;
+  height: 100%;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 1.25rem;
+  align-items: stretch;
+  gap: 1rem;
 }
 
 .play-header {
   width: 100%;
-  max-width: 960px;
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -277,14 +290,17 @@ button {
 /* ---------- Nonogram board ---------- */
 
 .nonogram {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 1rem;
-  max-width: 100%;
 }
 
 .toolbar {
+  flex-shrink: 0;
   display: inline-flex;
   gap: 2px;
   padding: 3px;
@@ -292,6 +308,17 @@ button {
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-sm);
+}
+
+.board-area {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: auto;
 }
 
 .tool {
@@ -319,8 +346,7 @@ button {
   grid-template-areas:
     'corner col-clues'
     'row-clues cells';
-  max-width: 100%;
-  overflow: auto;
+  flex-shrink: 0;
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background: var(--surface);

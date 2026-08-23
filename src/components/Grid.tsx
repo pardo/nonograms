@@ -1,6 +1,9 @@
-import { useMemo, useRef, useState } from 'react'
+import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { computeClues, isLineSatisfied, isPuzzleSolved } from '../nonogram/clues'
 import type { CellState, Puzzle } from '../nonogram/types'
+
+const MIN_CELL = 16
+const MAX_CELL = 72
 
 type Tool = 'fill' | 'mark'
 
@@ -28,10 +31,38 @@ export function Grid({ puzzle, grid, onChange, onMistake, onWin, disabled }: Gri
   const [hovered, setHovered] = useState<{ r: number; c: number } | null>(null)
   const paintRef = useRef<PaintAction | null>(null)
   const wonRef = useRef(false)
+  const boardAreaRef = useRef<HTMLDivElement>(null)
+  const [cellSize, setCellSize] = useState(28)
 
   const clues = useMemo(() => computeClues(puzzle.solution), [puzzle.solution])
   const maxRowClueLen = Math.max(...clues.rows.map((r) => r.length))
   const maxColClueLen = Math.max(...clues.cols.map((c) => c.length))
+
+  // Size cells to use all available width and height, not just width.
+  useLayoutEffect(() => {
+    const el = boardAreaRef.current
+    if (!el) return
+
+    const totalUnitsW = puzzle.width + maxRowClueLen
+    const totalUnitsH = puzzle.height + maxColClueLen
+
+    const recompute = (width: number, height: number) => {
+      const size = Math.floor(Math.min(width / totalUnitsW, height / totalUnitsH))
+      setCellSize(Math.max(MIN_CELL, Math.min(MAX_CELL, size)))
+    }
+
+    const observer = new ResizeObserver(([entry]) => {
+      if (!entry) return
+      const { width, height } = entry.contentRect
+      recompute(width, height)
+    })
+    observer.observe(el)
+
+    const rect = el.getBoundingClientRect()
+    recompute(rect.width, rect.height)
+
+    return () => observer.disconnect()
+  }, [puzzle.width, puzzle.height, maxRowClueLen, maxColClueLen])
 
   const applyToCell = (r: number, c: number, action: PaintAction) => {
     const current = grid[r][c]
@@ -89,6 +120,7 @@ export function Grid({ puzzle, grid, onChange, onMistake, onWin, disabled }: Gri
         </button>
       </div>
 
+      <div className="board-area" ref={boardAreaRef}>
       <div
         className="board"
         style={
@@ -97,6 +129,7 @@ export function Grid({ puzzle, grid, onChange, onMistake, onWin, disabled }: Gri
             '--rows': puzzle.height,
             '--col-clue-rows': maxColClueLen,
             '--row-clue-cols': maxRowClueLen,
+            '--cell-size': `${cellSize}px`,
           } as React.CSSProperties
         }
         onPointerUp={endPaint}
@@ -180,6 +213,7 @@ export function Grid({ puzzle, grid, onChange, onMistake, onWin, disabled }: Gri
             )),
           )}
         </div>
+      </div>
       </div>
     </div>
   )
