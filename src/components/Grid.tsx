@@ -20,8 +20,12 @@ function cloneGrid(grid: CellState[][]): CellState[][] {
   return grid.map((row) => row.slice())
 }
 
+const hoverCapable =
+  typeof window !== 'undefined' && window.matchMedia?.('(hover: hover) and (pointer: fine)').matches
+
 export function Grid({ puzzle, grid, onChange, onMistake, onWin, disabled }: GridProps) {
   const [tool, setTool] = useState<Tool>('fill')
+  const [hovered, setHovered] = useState<{ r: number; c: number } | null>(null)
   const paintRef = useRef<PaintAction | null>(null)
   const wonRef = useRef(false)
 
@@ -96,7 +100,10 @@ export function Grid({ puzzle, grid, onChange, onMistake, onWin, disabled }: Gri
           } as React.CSSProperties
         }
         onPointerUp={endPaint}
-        onPointerLeave={endPaint}
+        onPointerLeave={() => {
+          endPaint()
+          if (hoverCapable) setHovered(null)
+        }}
         onContextMenu={(e) => e.preventDefault()}
       >
         <div className="corner" />
@@ -107,8 +114,12 @@ export function Grid({ puzzle, grid, onChange, onMistake, onWin, disabled }: Gri
               grid.map((row) => row[c]),
               col,
             )
+            const isHovered = hovered?.c === c
             return (
-              <div className={satisfied ? 'clue-cell satisfied' : 'clue-cell'} key={c}>
+              <div
+                className={`clue-cell${satisfied ? ' satisfied' : ''}${isHovered ? ' hovered' : ''}`}
+                key={c}
+              >
                 {col.map((v, i) => (
                   <span key={i}>{v}</span>
                 ))}
@@ -120,8 +131,12 @@ export function Grid({ puzzle, grid, onChange, onMistake, onWin, disabled }: Gri
         <div className="row-clues">
           {clues.rows.map((row, r) => {
             const satisfied = isLineSatisfied(grid[r], row)
+            const isHovered = hovered?.r === r
             return (
-              <div className={satisfied ? 'clue-cell row satisfied' : 'clue-cell row'} key={r}>
+              <div
+                className={`clue-cell row${satisfied ? ' satisfied' : ''}${isHovered ? ' hovered' : ''}`}
+                key={r}
+              >
                 {row.map((v, i) => (
                   <span key={i}>{v}</span>
                 ))}
@@ -131,6 +146,12 @@ export function Grid({ puzzle, grid, onChange, onMistake, onWin, disabled }: Gri
         </div>
 
         <div className="cells">
+          {hoverCapable && hovered && (
+            <>
+              <div className="crosshair row-bar" style={{ top: `calc(${hovered.r} * var(--cell-size))` }} />
+              <div className="crosshair col-bar" style={{ left: `calc(${hovered.c} * var(--cell-size))` }} />
+            </>
+          )}
           {grid.map((row, r) =>
             row.map((state, c) => (
               <button
@@ -142,7 +163,10 @@ export function Grid({ puzzle, grid, onChange, onMistake, onWin, disabled }: Gri
                   e.preventDefault()
                   startPaint(r, c)
                 }}
-                onPointerEnter={() => continuePaint(r, c)}
+                onPointerEnter={(e) => {
+                  continuePaint(r, c)
+                  if (hoverCapable && e.pointerType === 'mouse') setHovered({ r, c })
+                }}
                 onContextMenu={(e) => {
                   e.preventDefault()
                   const applying: CellState = 'marked'

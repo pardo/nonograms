@@ -21,7 +21,10 @@ export function PuzzleMenu({ onSelect, onGenerate, completedIds }: PuzzleMenuPro
 
   return (
     <div className="menu">
-      <h1>Nonograms</h1>
+      <div className="menu-header">
+        <h1>Nonograms</h1>
+        <p>Pick a puzzle, or generate a fresh one</p>
+      </div>
 
       <section className="generate">
         <h2>Random puzzle</h2>
