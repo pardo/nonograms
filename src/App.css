@@ -45,6 +45,17 @@ html {
   -webkit-tap-highlight-color: transparent;
 }
 
+/*
+ * This is a tap/drag game, not a text document: disable selection and
+ * iOS's long-press callout app-wide so fast or repeated taps on the
+ * board and buttons never get interpreted as a text-selection gesture.
+ */
+#root {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
 body {
   margin: 0;
   background: var(--bg);
