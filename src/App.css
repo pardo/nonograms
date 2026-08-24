@@ -130,34 +130,67 @@ button {
   margin-top: 0;
 }
 
-.generate-buttons {
+.generate-table {
   display: flex;
+  flex-direction: column;
   gap: 0.6rem;
+}
+
+.generate-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
   flex-wrap: wrap;
 }
 
-.generate-buttons button {
+.generate-size {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+  width: 3.5rem;
+  flex-shrink: 0;
+}
+
+.generate-row-buttons {
+  display: flex;
+  gap: 0.5rem;
   flex: 1;
-  min-width: 120px;
-  padding: 0.85rem 1rem;
-  font-size: 0.95rem;
+  flex-wrap: wrap;
+}
+
+.difficulty-button {
+  flex: 1;
+  min-width: 90px;
+  padding: 0.7rem 0.5rem;
+  font-size: 0.88rem;
   font-weight: 600;
   font-family: inherit;
-  border-radius: var(--radius-md);
+  text-align: center;
+  text-decoration: none;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: var(--bg);
   color: var(--ink);
   cursor: pointer;
-  transition: transform 0.12s ease, background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: transform 0.12s ease, background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
-.generate-buttons button:hover {
+.difficulty-button:hover {
   border-color: var(--accent);
   color: var(--accent);
 }
 
-.generate-buttons button:active {
-  transform: scale(0.97);
+.difficulty-button:active {
+  transform: scale(0.96);
+}
+
+.difficulty-button[data-difficulty='expert'] {
+  border-color: color-mix(in srgb, var(--mistake) 40%, var(--border));
+}
+
+.difficulty-button[data-difficulty='expert']:hover {
+  border-color: var(--mistake);
+  color: var(--mistake);
 }
 
 .puzzle-grid {
@@ -182,6 +215,7 @@ button {
   cursor: pointer;
   font-family: inherit;
   font-size: 1rem;
+  text-decoration: none;
   box-shadow: var(--shadow-sm);
   transition: transform 0.14s ease, box-shadow 0.14s ease, border-color 0.14s ease;
 }
@@ -531,6 +565,44 @@ button {
   margin-top: 0.5rem;
 }
 
+.run-history {
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+  text-align: left;
+}
+
+.run-history h3 {
+  margin: 0 0 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-soft);
+}
+
+.run-history ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.run-history li {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-soft);
+}
+
+.run-history-mistakes {
+  color: var(--ink-soft);
+  opacity: 0.7;
+}
+
 .modal-actions {
   display: flex;
   gap: 0.75rem;
@@ -557,6 +629,30 @@ button {
 }
 
 .modal-actions button:active {
+  transform: scale(0.97);
+}
+
+.new-random-button {
+  width: 100%;
+  margin-top: 0.6rem;
+  padding: 0.7rem;
+  border-radius: var(--radius-md);
+  border: 1px dashed var(--border);
+  background: transparent;
+  color: var(--ink-soft);
+  font-family: inherit;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, transform 0.12s ease;
+}
+
+.new-random-button:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.new-random-button:active {
   transform: scale(0.97);
 }
 

@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { computeClues, isLineSatisfied, isPuzzleSolved } from '../nonogram/clues'
 import type { CellState, Puzzle } from '../nonogram/types'
 
@@ -63,6 +63,12 @@ export function Grid({ puzzle, grid, onChange, onMistake, onWin, disabled }: Gri
 
     return () => observer.disconnect()
   }, [puzzle.width, puzzle.height, maxRowClueLen, maxColClueLen])
+
+  // Re-arm the win guard whenever the board is re-enabled (e.g. "Play again"
+  // on the same puzzle instance, which doesn't remount this component).
+  useEffect(() => {
+    if (!disabled) wonRef.current = false
+  }, [disabled])
 
   const applyToCell = (r: number, c: number, action: PaintAction) => {
     const current = grid[r][c]

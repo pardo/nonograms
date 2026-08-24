@@ -1,15 +1,27 @@
 import { formatDuration } from '../hooks/useTimer'
+import { bestTime } from '../nonogram/storage'
+import type { RunRecord } from '../nonogram/types'
 
 interface WinModalProps {
   elapsedMs: number
   mistakes: number
-  bestTimeMs?: number
+  history: RunRecord[]
   onPlayAgain: () => void
   onBackToMenu: () => void
+  onNewRandom: () => void
 }
 
-export function WinModal({ elapsedMs, mistakes, bestTimeMs, onPlayAgain, onBackToMenu }: WinModalProps) {
-  const isNewBest = bestTimeMs === undefined || elapsedMs <= bestTimeMs
+export function WinModal({
+  elapsedMs,
+  mistakes,
+  history,
+  onPlayAgain,
+  onBackToMenu,
+  onNewRandom,
+}: WinModalProps) {
+  const best = bestTime(history)
+  const isNewBest = best === undefined || elapsedMs <= best
+  const previousRuns = history.slice(1, 6)
 
   return (
     <div className="modal-backdrop">
@@ -18,14 +30,32 @@ export function WinModal({ elapsedMs, mistakes, bestTimeMs, onPlayAgain, onBackT
         <p className="win-stat">Time: {formatDuration(elapsedMs)}</p>
         <p className="win-stat">Mistakes: {mistakes}</p>
         {isNewBest && <p className="win-best">New best time!</p>}
+
+        {previousRuns.length > 0 && (
+          <div className="run-history">
+            <h3>Previous runs</h3>
+            <ul>
+              {previousRuns.map((run, i) => (
+                <li key={i}>
+                  <span>{formatDuration(run.timeMs)}</span>
+                  <span className="run-history-mistakes">{run.mistakes} mistakes</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         <div className="modal-actions">
           <button type="button" onClick={onPlayAgain}>
             Play again
           </button>
           <button type="button" onClick={onBackToMenu}>
-            Back to menu
+            Menu
           </button>
         </div>
+        <button type="button" className="new-random-button" onClick={onNewRandom}>
+          🎲 New random puzzle
+        </button>
       </div>
     </div>
   )

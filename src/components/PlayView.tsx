@@ -2,24 +2,27 @@ import { useEffect, useState } from 'react'
 import { Grid } from './Grid'
 import { WinModal } from './WinModal'
 import { formatDuration, useTimer } from '../hooks/useTimer'
-import { loadProgress, saveProgress } from '../nonogram/storage'
-import type { CellState, Puzzle } from '../nonogram/types'
+import { isKnownSize } from '../nonogram/generator'
+import { addRunRecord, loadHistory, loadProgress, saveProgress } from '../nonogram/storage'
+import type { CellState, Difficulty, Puzzle, RunRecord } from '../nonogram/types'
 
 interface PlayViewProps {
   puzzle: Puzzle
   onBackToMenu: () => void
   onCompleted: (puzzleId: string) => void
+  onNewRandom: (size: number, difficulty: Difficulty) => void
 }
 
 function emptyGrid(width: number, height: number): CellState[][] {
   return Array.from({ length: height }, () => new Array(width).fill('empty') as CellState[])
 }
 
-export function PlayView({ puzzle, onBackToMenu, onCompleted }: PlayViewProps) {
+export function PlayView({ puzzle, onBackToMenu, onCompleted, onNewRandom }: PlayViewProps) {
   const saved = loadProgress(puzzle.id)
   const [grid, setGrid] = useState<CellState[][]>(saved?.grid ?? emptyGrid(puzzle.width, puzzle.height))
   const [mistakes, setMistakes] = useState(saved?.mistakes ?? 0)
   const [won, setWon] = useState(saved?.completed ?? false)
+  const [history, setHistory] = useState<RunRecord[]>(() => loadHistory(puzzle.id))
   const timer = useTimer(saved?.elapsedMs ?? 0)
 
   useEffect(() => {
@@ -35,7 +38,6 @@ export function PlayView({ puzzle, onBackToMenu, onCompleted }: PlayViewProps) {
       mistakes,
       elapsedMs: timer.elapsedMs,
       completed: won,
-      bestTimeMs: won ? Math.min(timer.elapsedMs, saved?.bestTimeMs ?? Infinity) : saved?.bestTimeMs,
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [grid, mistakes, won])
@@ -44,6 +46,13 @@ export function PlayView({ puzzle, onBackToMenu, onCompleted }: PlayViewProps) {
     timer.pause()
     setWon(true)
     onCompleted(puzzle.id)
+    setHistory(
+      addRunRecord(puzzle.id, {
+        timeMs: timer.elapsedMs,
+        mistakes,
+        completedAt: new Date().toISOString(),
+      }),
+    )
   }
 
   const handleRestart = () => {
@@ -53,6 +62,9 @@ export function PlayView({ puzzle, onBackToMenu, onCompleted }: PlayViewProps) {
     timer.reset(0)
     timer.start()
   }
+
+  const randomSize = isKnownSize(puzzle.width) ? puzzle.width : 10
+  const randomDifficulty: Difficulty = puzzle.difficulty ?? 'medium'
 
   return (
     <div className="play-view">
@@ -80,9 +92,10 @@ export function PlayView({ puzzle, onBackToMenu, onCompleted }: PlayViewProps) {
         <WinModal
           elapsedMs={timer.elapsedMs}
           mistakes={mistakes}
-          bestTimeMs={saved?.bestTimeMs}
+          history={history}
           onPlayAgain={handleRestart}
           onBackToMenu={onBackToMenu}
+          onNewRandom={() => onNewRandom(randomSize, randomDifficulty)}
         />
       )}
     </div>

@@ -1,6 +1,6 @@
 export type CellState = 'empty' | 'filled' | 'marked'
 
-export type Difficulty = 'easy' | 'medium' | 'hard'
+export type Difficulty = 'easy' | 'medium' | 'hard' | 'expert'
 
 export interface Puzzle {
   id: string
@@ -28,5 +28,10 @@ export interface PuzzleProgress {
   mistakes: number
   elapsedMs: number
   completed: boolean
-  bestTimeMs?: number
+}
+
+export interface RunRecord {
+  timeMs: number
+  mistakes: number
+  completedAt: string
 }
