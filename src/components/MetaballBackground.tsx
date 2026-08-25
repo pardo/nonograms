@@ -113,9 +113,6 @@ class Blob2D {
       this.y = 1 - margin
       this.vy *= -1
     }
-
-    this.vx *= 0.999
-    this.vy *= 0.999
   }
 }
 
