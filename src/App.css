@@ -10,6 +10,8 @@
   --success: #1fa971;
   --success-bg: #e6f7ef;
   --mistake: #e0483f;
+  /* Tentative fills: distinct from both --ink (committed) and --mistake. */
+  --maybe: #d98324;
   --line: #2a2a2e;
   --shadow: 0 1px 2px rgba(20, 20, 25, 0.04), 0 8px 24px -12px rgba(20, 20, 25, 0.18);
   --shadow-sm: 0 1px 2px rgba(20, 20, 25, 0.06);
@@ -36,6 +38,7 @@
     --success: #34d399;
     --success-bg: #113328;
     --mistake: #ff6b61;
+    --maybe: #f0a23c;
     --line: #eceaea;
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 12px 28px -12px rgba(0, 0, 0, 0.6);
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
@@ -54,6 +57,7 @@
   --success: #34d399;
   --success-bg: #113328;
   --mistake: #ff6b61;
+  --maybe: #f0a23c;
   --line: #eceaea;
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 12px 28px -12px rgba(0, 0, 0, 0.6);
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
@@ -667,6 +671,15 @@ button {
   gap: 1rem;
 }
 
+.toolbar-row {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
 .toolbar {
   flex-shrink: 0;
   display: inline-flex;
@@ -705,6 +718,54 @@ button {
 .tool.active {
   background: var(--accent);
   color: var(--accent-ink);
+}
+
+/* The tentative tool is deliberately off-palette from Fill, so the mode you
+   are in is obvious at a glance. */
+.tool[data-tool='maybe'].active {
+  background: var(--maybe);
+  color: var(--accent-ink);
+}
+
+.maybe-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 3px 3px 3px 0.6rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.maybe-count {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--maybe);
+  white-space: nowrap;
+}
+
+.maybe-action {
+  padding: 0.45rem 0.7rem;
+  border: none;
+  border-radius: calc(var(--radius-md) - 3px);
+  background: transparent;
+  color: var(--ink-soft);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.maybe-action.commit:hover {
+  background: color-mix(in srgb, var(--maybe) 18%, transparent);
+  color: var(--maybe);
+}
+
+.maybe-action.discard:hover {
+  background: color-mix(in srgb, var(--mistake) 15%, transparent);
+  color: var(--mistake);
 }
 
 .board {
@@ -830,6 +891,22 @@ button {
   background: var(--ink);
 }
 
+/* Tentative fill: reads as a fill, but hollow and dashed so it never gets
+   confused with a committed one. */
+.cell.maybe {
+  background: color-mix(in srgb, var(--maybe) 22%, transparent);
+  box-shadow: inset 0 0 0 2px var(--maybe);
+}
+
+.cell.maybe::after {
+  content: '';
+  position: absolute;
+  inset: 30%;
+  border-radius: 50%;
+  background: var(--maybe);
+  opacity: 0.55;
+}
+
 .cell.marked::before,
 .cell.marked::after {
   content: '';
@@ -853,6 +930,12 @@ button {
 @media (hover: hover) {
   .cell:hover {
     box-shadow: inset 0 0 0 1.5px var(--accent);
+  }
+
+  /* Keep the tentative ring visible under the hover ring, rather than
+     replacing it. */
+  .cell.maybe:hover {
+    box-shadow: inset 0 0 0 2px var(--maybe), inset 0 0 0 4px var(--accent);
   }
 }
 

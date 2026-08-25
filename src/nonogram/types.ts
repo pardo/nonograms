@@ -1,4 +1,11 @@
-export type CellState = 'empty' | 'filled' | 'marked'
+/**
+ * 'maybe' is a tentative fill: a placeholder for "this cell is filled *if* my
+ * assumption holds". Expert puzzles can't be finished by single-line logic
+ * alone, so the player has to assume a cell and follow the consequences; a
+ * maybe records that hypothesis without committing to it. It never counts
+ * towards a clue and never scores a mistake - only committing it does.
+ */
+export type CellState = 'empty' | 'filled' | 'marked' | 'maybe'
 
 export type Difficulty = 'easy' | 'medium' | 'hard' | 'expert'
 

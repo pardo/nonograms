@@ -5,7 +5,24 @@ import type { CellState, Puzzle } from '../nonogram/types'
 const MIN_CELL = 16
 const MAX_CELL = 72
 
-type Tool = 'fill' | 'mark'
+type Tool = 'fill' | 'mark' | 'maybe'
+
+/** State each tool paints when it sets (rather than clears) a cell. */
+const TOOL_STATE: Record<Tool, CellState> = {
+  fill: 'filled',
+  mark: 'marked',
+  maybe: 'maybe',
+}
+
+const TOOLS: { id: Tool; label: string; hint: string }[] = [
+  { id: 'fill', label: '▉ Fill', hint: 'Fill a cell for real. A wrong fill counts as a mistake.' },
+  { id: 'mark', label: '✕ Mark', hint: 'Mark a cell as definitely empty.' },
+  {
+    id: 'maybe',
+    label: '? Maybe',
+    hint: 'Pencil in a tentative fill while you test an assumption. Costs nothing if you are wrong.',
+  },
+]
 
 interface GridProps {
   puzzle: Puzzle
@@ -70,9 +87,21 @@ export function Grid({ puzzle, grid, onChange, onMistake, onWin, disabled }: Gri
     if (!disabled) wonRef.current = false
   }, [disabled])
 
+  // Cells currently held as a hypothesis, so they can be committed or dropped
+  // in one go once the assumption pans out (or doesn't).
+  const maybeCells = useMemo(() => {
+    const found: { r: number; c: number }[] = []
+    grid.forEach((row, r) =>
+      row.forEach((state, c) => {
+        if (state === 'maybe') found.push({ r, c })
+      }),
+    )
+    return found
+  }, [grid])
+
   const applyToCell = (r: number, c: number, action: PaintAction) => {
     const current = grid[r][c]
-    const targetState: CellState = action === 'clear' ? 'empty' : tool === 'fill' ? 'filled' : 'marked'
+    const targetState: CellState = action === 'clear' ? 'empty' : TOOL_STATE[tool]
     if (current === targetState) return
 
     const next = cloneGrid(grid)
@@ -89,10 +118,34 @@ export function Grid({ puzzle, grid, onChange, onMistake, onWin, disabled }: Gri
     }
   }
 
+  /**
+   * Turns every tentative cell into a real fill, or wipes them. Committing is
+   * the moment a hypothesis becomes a claim, so this is where a wrong guess
+   * finally scores its mistakes.
+   */
+  const resolveMaybes = (target: 'filled' | 'empty') => {
+    if (disabled || maybeCells.length === 0) return
+
+    const next = cloneGrid(grid)
+    let wrong = 0
+    for (const { r, c } of maybeCells) {
+      next[r][c] = target
+      if (target === 'filled' && !puzzle.solution[r][c]) wrong++
+    }
+    onChange(next)
+
+    for (let i = 0; i < wrong; i++) onMistake()
+
+    if (!wonRef.current && isPuzzleSolved(next, puzzle.solution)) {
+      wonRef.current = true
+      onWin()
+    }
+  }
+
   const startPaint = (r: number, c: number) => {
     if (disabled) return
     const current = grid[r][c]
-    const applying: CellState = tool === 'fill' ? 'filled' : 'marked'
+    const applying = TOOL_STATE[tool]
     const action: PaintAction = current === applying ? 'clear' : 'set'
     paintRef.current = action
     applyToCell(r, c, action)
@@ -109,21 +162,44 @@ export function Grid({ puzzle, grid, onChange, onMistake, onWin, disabled }: Gri
 
   return (
     <div className="nonogram">
-      <div className="toolbar" role="group" aria-label="Drawing tool">
-        <button
-          type="button"
-          className={tool === 'fill' ? 'tool active' : 'tool'}
-          onClick={() => setTool('fill')}
-        >
-          ▉ Fill
-        </button>
-        <button
-          type="button"
-          className={tool === 'mark' ? 'tool active' : 'tool'}
-          onClick={() => setTool('mark')}
-        >
-          ✕ Mark
-        </button>
+      <div className="toolbar-row">
+        <div className="toolbar" role="group" aria-label="Drawing tool">
+          {TOOLS.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              className={tool === t.id ? 'tool active' : 'tool'}
+              data-tool={t.id}
+              title={t.hint}
+              aria-pressed={tool === t.id}
+              onClick={() => setTool(t.id)}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        {maybeCells.length > 0 && !disabled && (
+          <div className="maybe-actions" role="group" aria-label="Resolve tentative cells">
+            <span className="maybe-count">{maybeCells.length} tentative</span>
+            <button
+              type="button"
+              className="maybe-action commit"
+              title="Turn every tentative cell into a real fill"
+              onClick={() => resolveMaybes('filled')}
+            >
+              ✓ Commit
+            </button>
+            <button
+              type="button"
+              className="maybe-action discard"
+              title="Clear every tentative cell"
+              onClick={() => resolveMaybes('empty')}
+            >
+              ⌫ Discard
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="board-area" ref={boardAreaRef}>
