@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { ThemeToggle } from './ThemeToggle'
 import { DIFFICULTIES, SIZES } from '../nonogram/generator'
 import { puzzleHash, randomHash } from '../nonogram/routing'
 import { bestTime, loadHistory } from '../nonogram/storage'
@@ -10,9 +11,17 @@ interface PuzzleMenuProps {
   onSelect: (puzzle: Puzzle) => void
   onGenerate: (size: number, difficulty: Difficulty) => void
   completedIds: Set<string>
+  theme: 'light' | 'dark'
+  onToggleTheme: () => void
 }
 
-export function PuzzleMenu({ onSelect, onGenerate, completedIds }: PuzzleMenuProps) {
+export function PuzzleMenu({
+  onSelect,
+  onGenerate,
+  completedIds,
+  theme,
+  onToggleTheme,
+}: PuzzleMenuProps) {
   const byCategory = useMemo(() => {
     const map = new Map<string, Puzzle[]>()
     for (const puzzle of allPuzzles) {
@@ -26,6 +35,7 @@ export function PuzzleMenu({ onSelect, onGenerate, completedIds }: PuzzleMenuPro
   return (
     <div className="menu">
       <div className="menu-header">
+        <ThemeToggle theme={theme} onToggle={onToggleTheme} />
         <h1>Nonograms</h1>
         <p>Pick a puzzle, or generate a fresh one</p>
       </div>

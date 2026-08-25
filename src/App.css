@@ -18,8 +18,13 @@
   --radius-sm: 8px;
 }
 
+/*
+ * Dark palette applies when the system prefers dark and the user hasn't
+ * explicitly chosen light (media query path), or when the toggle has
+ * explicitly set dark regardless of system preference (attribute path).
+ */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme='light']) {
     --bg: #131318;
     --surface: #1c1c22;
     --surface-raised: #232329;
@@ -35,6 +40,23 @@
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 12px 28px -12px rgba(0, 0, 0, 0.6);
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
   }
+}
+
+:root[data-theme='dark'] {
+  --bg: #131318;
+  --surface: #1c1c22;
+  --surface-raised: #232329;
+  --border: #34343c;
+  --ink: #f2f1ef;
+  --ink-soft: #a3a2ac;
+  --accent: #8b7dff;
+  --accent-ink: #131318;
+  --success: #34d399;
+  --success-bg: #113328;
+  --mistake: #ff6b61;
+  --line: #eceaea;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 12px 28px -12px rgba(0, 0, 0, 0.6);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 * {
@@ -62,6 +84,95 @@ body {
   color: var(--ink);
   font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
   transition: background-color 0.2s ease, color 0.2s ease;
+  position: relative;
+}
+
+/* Slow, soft, theme-aware ambient blobs. Fixed and behind content. */
+.bg-blobs {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(70px);
+  opacity: 0.35;
+  will-change: transform;
+}
+
+.blob-1 {
+  top: -10%;
+  left: -8%;
+  width: 42vmax;
+  height: 42vmax;
+  background: var(--accent);
+  animation: blob-float-1 20s ease-in-out infinite alternate;
+}
+
+.blob-2 {
+  top: 40%;
+  right: -12%;
+  width: 36vmax;
+  height: 36vmax;
+  background: var(--success);
+  animation: blob-float-2 17s ease-in-out infinite alternate;
+}
+
+.blob-3 {
+  bottom: -15%;
+  left: 20%;
+  width: 38vmax;
+  height: 38vmax;
+  background: var(--mistake);
+  opacity: 0.22;
+  animation: blob-float-3 23s ease-in-out infinite alternate;
+}
+
+.blob-4 {
+  top: 10%;
+  left: 45%;
+  width: 26vmax;
+  height: 26vmax;
+  background: var(--accent);
+  opacity: 0.25;
+  animation: blob-float-2 14s ease-in-out infinite alternate-reverse;
+}
+
+@keyframes blob-float-1 {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  100% {
+    transform: translate(18vw, 14vh) scale(1.2);
+  }
+}
+
+@keyframes blob-float-2 {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  100% {
+    transform: translate(-20vw, 12vh) scale(0.85);
+  }
+}
+
+@keyframes blob-float-3 {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  100% {
+    transform: translate(14vw, -18vh) scale(1.15);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .blob {
+    animation: none;
+  }
 }
 
 html,
@@ -87,6 +198,45 @@ body {
 
 button {
   -webkit-tap-highlight-color: transparent;
+}
+
+.theme-toggle {
+  flex-shrink: 0;
+  width: 2.1rem;
+  height: 2.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--bg);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+@media (hover: hover) {
+  .theme-toggle:hover {
+    box-shadow: var(--shadow-sm);
+    transform: scale(1.06);
+  }
+}
+
+.theme-toggle:active {
+  transform: scale(0.94);
+}
+
+.menu-header {
+  position: relative;
+}
+
+.menu-header .theme-toggle {
+  position: absolute;
+  top: 0.15rem;
+  right: 0;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
 }
 
 /* ---------- Menu ---------- */

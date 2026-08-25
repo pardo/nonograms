@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
+import { Background } from './components/Background'
 import { PlayView } from './components/PlayView'
 import { PuzzleMenu } from './components/PuzzleMenu'
+import { useTheme } from './hooks/useTheme'
 import { generateRandomPuzzle } from './nonogram/generator'
 import { parseHash, puzzleHash, randomHash } from './nonogram/routing'
 import type { Difficulty, Puzzle } from './nonogram/types'
@@ -27,6 +29,7 @@ function saveCompletedIds(ids: Set<string>) {
 export default function App() {
   const [activePuzzle, setActivePuzzle] = useState<Puzzle | null>(null)
   const [completedIds, setCompletedIds] = useState<Set<string>>(() => loadCompletedIds())
+  const { theme, toggle: toggleTheme } = useTheme()
 
   // Deep-linking: resolve the puzzle from the URL hash on load, and on
   // browser back/forward or a hash pasted while the app is open.
@@ -80,19 +83,28 @@ export default function App() {
     history.pushState('', document.title, window.location.pathname + window.location.search)
   }
 
-  if (activePuzzle) {
-    return (
-      <PlayView
-        key={activePuzzle.id}
-        puzzle={activePuzzle}
-        onBackToMenu={handleBackToMenu}
-        onCompleted={handleCompleted}
-        onNewRandom={handleGenerate}
-      />
-    )
-  }
-
   return (
-    <PuzzleMenu onSelect={handleSelect} onGenerate={handleGenerate} completedIds={completedIds} />
+    <>
+      <Background />
+      {activePuzzle ? (
+        <PlayView
+          key={activePuzzle.id}
+          puzzle={activePuzzle}
+          onBackToMenu={handleBackToMenu}
+          onCompleted={handleCompleted}
+          onNewRandom={handleGenerate}
+          theme={theme}
+          onToggleTheme={toggleTheme}
+        />
+      ) : (
+        <PuzzleMenu
+          onSelect={handleSelect}
+          onGenerate={handleGenerate}
+          completedIds={completedIds}
+          theme={theme}
+          onToggleTheme={toggleTheme}
+        />
+      )}
+    </>
   )
 }
