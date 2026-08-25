@@ -64,6 +64,7 @@ export function PuzzleMenu({
                     className="difficulty-button"
                     href={randomHash(size, d.id)}
                     data-difficulty={d.id}
+                    title={d.blurb}
                     onClick={(e) => {
                       e.preventDefault()
                       onGenerate(size, d.id)
@@ -76,6 +77,14 @@ export function PuzzleMenu({
             </div>
           ))}
         </div>
+        <dl className="difficulty-legend">
+          {DIFFICULTIES.map((d) => (
+            <div key={d.id} className="difficulty-legend-item">
+              <dt data-difficulty={d.id}>{d.label}</dt>
+              <dd>{d.blurb}</dd>
+            </div>
+          ))}
+        </dl>
       </section>
 
       {[...byCategory.entries()].map(([category, puzzles]) => (
