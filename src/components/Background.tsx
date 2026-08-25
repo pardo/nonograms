@@ -1,10 +1,11 @@
-export function Background() {
-  return (
-    <div className="bg-blobs" aria-hidden="true">
-      <div className="blob blob-1" />
-      <div className="blob blob-2" />
-      <div className="blob blob-3" />
-      <div className="blob blob-4" />
-    </div>
-  )
+import type { BackgroundSettings } from '../hooks/useBackgroundSettings'
+import { MetaballBackground } from './MetaballBackground'
+
+interface BackgroundProps {
+  settings: BackgroundSettings
+  theme: 'light' | 'dark'
+}
+
+export function Background({ settings, theme }: BackgroundProps) {
+  return <MetaballBackground settings={settings} theme={theme} />
 }

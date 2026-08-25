@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { BackgroundSettingsButton } from './BackgroundSettingsButton'
 import { Grid } from './Grid'
 import { StatsModal } from './StatsModal'
 import { ThemeToggle } from './ThemeToggle'
@@ -7,6 +8,7 @@ import { formatDuration, useTimer } from '../hooks/useTimer'
 import { encodeSolution } from '../nonogram/encode'
 import { isKnownSize } from '../nonogram/generator'
 import { addRunRecord, loadHistory, loadProgress, saveProgress } from '../nonogram/storage'
+import type { BackgroundSettings } from '../hooks/useBackgroundSettings'
 import type { CellState, Difficulty, Puzzle, RunRecord } from '../nonogram/types'
 
 interface PlayViewProps {
@@ -16,6 +18,8 @@ interface PlayViewProps {
   onNewRandom: (size: number, difficulty: Difficulty) => void
   theme: 'light' | 'dark'
   onToggleTheme: () => void
+  bgSettings: BackgroundSettings
+  onUpdateBgSettings: (patch: Partial<BackgroundSettings>) => void
 }
 
 function emptyGrid(width: number, height: number): CellState[][] {
@@ -29,6 +33,8 @@ export function PlayView({
   onNewRandom,
   theme,
   onToggleTheme,
+  bgSettings,
+  onUpdateBgSettings,
 }: PlayViewProps) {
   const saved = loadProgress(puzzle.id)
   const [grid, setGrid] = useState<CellState[][]>(saved?.grid ?? emptyGrid(puzzle.width, puzzle.height))
@@ -101,6 +107,7 @@ export function PlayView({
           </button>
           <span>⏱ {formatDuration(timer.elapsedMs)}</span>
           <span>✗ {mistakes}</span>
+          <BackgroundSettingsButton settings={bgSettings} onUpdate={onUpdateBgSettings} />
           <ThemeToggle theme={theme} onToggle={onToggleTheme} />
         </div>
       </header>

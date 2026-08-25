@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Background } from './components/Background'
 import { PlayView } from './components/PlayView'
 import { PuzzleMenu } from './components/PuzzleMenu'
+import { useBackgroundSettings } from './hooks/useBackgroundSettings'
 import { useTheme } from './hooks/useTheme'
 import { encodeSolution } from './nonogram/encode'
 import { generateRandomPuzzle, puzzleFromEncoded } from './nonogram/generator'
@@ -31,6 +32,7 @@ export default function App() {
   const [activePuzzle, setActivePuzzle] = useState<Puzzle | null>(null)
   const [completedIds, setCompletedIds] = useState<Set<string>>(() => loadCompletedIds())
   const { theme, toggle: toggleTheme } = useTheme()
+  const { settings: bgSettings, update: updateBgSettings } = useBackgroundSettings()
 
   // Deep-linking: resolve the puzzle from the URL hash on load, and on
   // browser back/forward or a hash pasted while the app is open.
@@ -99,7 +101,7 @@ export default function App() {
 
   return (
     <>
-      <Background />
+      <Background settings={bgSettings} theme={theme} />
       {activePuzzle ? (
         <PlayView
           key={activePuzzle.id}
@@ -109,6 +111,8 @@ export default function App() {
           onNewRandom={handleGenerate}
           theme={theme}
           onToggleTheme={toggleTheme}
+          bgSettings={bgSettings}
+          onUpdateBgSettings={updateBgSettings}
         />
       ) : (
         <PuzzleMenu
@@ -117,6 +121,8 @@ export default function App() {
           completedIds={completedIds}
           theme={theme}
           onToggleTheme={toggleTheme}
+          bgSettings={bgSettings}
+          onUpdateBgSettings={updateBgSettings}
         />
       )}
     </>

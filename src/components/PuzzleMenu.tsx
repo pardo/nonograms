@@ -1,9 +1,11 @@
 import { useMemo } from 'react'
+import { BackgroundSettingsButton } from './BackgroundSettingsButton'
 import { ThemeToggle } from './ThemeToggle'
 import { DIFFICULTIES, SIZES } from '../nonogram/generator'
 import { puzzleHash, randomHash } from '../nonogram/routing'
 import { bestTime, loadHistory } from '../nonogram/storage'
 import { formatDuration } from '../hooks/useTimer'
+import type { BackgroundSettings } from '../hooks/useBackgroundSettings'
 import type { Difficulty, Puzzle } from '../nonogram/types'
 import { allPuzzles } from '../puzzles'
 
@@ -13,6 +15,8 @@ interface PuzzleMenuProps {
   completedIds: Set<string>
   theme: 'light' | 'dark'
   onToggleTheme: () => void
+  bgSettings: BackgroundSettings
+  onUpdateBgSettings: (patch: Partial<BackgroundSettings>) => void
 }
 
 export function PuzzleMenu({
@@ -21,6 +25,8 @@ export function PuzzleMenu({
   completedIds,
   theme,
   onToggleTheme,
+  bgSettings,
+  onUpdateBgSettings,
 }: PuzzleMenuProps) {
   const byCategory = useMemo(() => {
     const map = new Map<string, Puzzle[]>()
@@ -35,7 +41,10 @@ export function PuzzleMenu({
   return (
     <div className="menu">
       <div className="menu-header">
-        <ThemeToggle theme={theme} onToggle={onToggleTheme} />
+        <div className="header-actions">
+          <BackgroundSettingsButton settings={bgSettings} onUpdate={onUpdateBgSettings} />
+          <ThemeToggle theme={theme} onToggle={onToggleTheme} />
+        </div>
         <h1>Nonograms</h1>
         <p>Pick a puzzle, or generate a fresh one</p>
       </div>
