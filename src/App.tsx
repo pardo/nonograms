@@ -3,8 +3,9 @@ import { Background } from './components/Background'
 import { PlayView } from './components/PlayView'
 import { PuzzleMenu } from './components/PuzzleMenu'
 import { useTheme } from './hooks/useTheme'
-import { generateRandomPuzzle } from './nonogram/generator'
-import { parseHash, puzzleHash, randomHash } from './nonogram/routing'
+import { encodeSolution } from './nonogram/encode'
+import { generateRandomPuzzle, puzzleFromEncoded } from './nonogram/generator'
+import { generatedHash, parseHash, puzzleHash } from './nonogram/routing'
 import type { Difficulty, Puzzle } from './nonogram/types'
 import { findPuzzle } from './puzzles'
 import './App.css'
@@ -40,9 +41,22 @@ export default function App() {
         setActivePuzzle(null)
       } else if (route.type === 'puzzle') {
         setActivePuzzle(findPuzzle(route.id) ?? null)
+      } else if (route.type === 'generated') {
+        setActivePuzzle(puzzleFromEncoded(route.size, route.difficulty, route.solution))
       } else {
+        // 'random': generate fresh, then normalize the URL to a stable,
+        // reload-safe link pointing at this exact puzzle. Without this, a
+        // simple reload (or iOS Safari silently reloading a backgrounded
+        // tab) would land back on this branch and generate a *different*
+        // puzzle, making any in-progress solve look like it never saved.
         try {
-          setActivePuzzle(generateRandomPuzzle(route.size, route.difficulty))
+          const puzzle = generateRandomPuzzle(route.size, route.difficulty)
+          setActivePuzzle(puzzle)
+          history.replaceState(
+            null,
+            '',
+            generatedHash(route.size, route.difficulty, encodeSolution(puzzle.solution)),
+          )
         } catch {
           setActivePuzzle(null)
         }
@@ -72,7 +86,7 @@ export default function App() {
     try {
       const puzzle = generateRandomPuzzle(size, difficulty)
       setActivePuzzle(puzzle)
-      window.location.hash = randomHash(size, difficulty)
+      window.location.hash = generatedHash(size, difficulty, encodeSolution(puzzle.solution))
     } catch (err) {
       console.error(err)
     }

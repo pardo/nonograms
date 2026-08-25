@@ -22,11 +22,17 @@ export function encodeSolution(solution: boolean[][]): string {
 
   let binary = ''
   for (const byte of bytes) binary += String.fromCharCode(byte)
-  return btoa(binary)
+  // URL-safe (usable directly in a hash route, no percent-encoding needed)
+  // and harmlessly compatible with the plain base64 already stored by
+  // earlier versions, since '+'/'/' never appear in URL-safe output and
+  // '-'/'_' never appear in plain base64.
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
 }
 
 export function decodeSolution(base64: string, width: number, height: number): boolean[][] {
-  const binary = atob(base64)
+  let normalized = base64.replace(/-/g, '+').replace(/_/g, '/')
+  while (normalized.length % 4 !== 0) normalized += '='
+  const binary = atob(normalized)
   const bytes = new Uint8Array(binary.length)
   for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
 

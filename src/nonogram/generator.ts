@@ -1,4 +1,5 @@
 import { computeClues } from './clues'
+import { decodeSolution } from './encode'
 import { solveByPropagation } from './solver'
 import type { Difficulty, Puzzle } from './types'
 
@@ -73,4 +74,21 @@ export function generateRandomPuzzle(size: number, difficulty: Difficulty): Puzz
   }
 
   throw new Error(`Could not generate a logically-solvable ${size}x${size} ${difficulty} puzzle in time`)
+}
+
+/**
+ * Reconstructs a generated puzzle from a stable, reload-safe URL (see
+ * routing.ts). The id is derived from the encoded solution itself, so
+ * progress/history saved under it correctly resumes on revisit.
+ */
+export function puzzleFromEncoded(size: number, difficulty: Difficulty, solutionB64: string): Puzzle {
+  return {
+    id: `generated-${size}-${difficulty}-${solutionB64}`,
+    title: `Random ${size}x${size}`,
+    width: size,
+    height: size,
+    solution: decodeSolution(solutionB64, size, size),
+    difficulty,
+    category: 'Generated',
+  }
 }
