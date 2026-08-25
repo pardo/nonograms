@@ -271,9 +271,27 @@ button {
   padding: 0.85rem;
   border: 1px solid var(--border);
   border-radius: 0.9rem;
-  background: var(--surface);
+  background: color-mix(in srgb, var(--surface) 82%, transparent);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
   box-shadow: var(--shadow-md, var(--shadow-sm));
   text-align: left;
+}
+
+/* While the background settings panel is open, fade the rest of the UI
+   out of the way so the effect being tuned is actually visible. */
+body:has(.bg-settings-panel) .menu-header h1,
+body:has(.bg-settings-panel) .menu-header > p,
+body:has(.bg-settings-panel) .generate,
+body:has(.bg-settings-panel) .category,
+body:has(.bg-settings-panel) .play-header h2,
+body:has(.bg-settings-panel) .back-button,
+body:has(.bg-settings-panel) .stats span,
+body:has(.bg-settings-panel) .stats-button,
+body:has(.bg-settings-panel) .nonogram {
+  opacity: 0.1;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
 }
 
 .bg-settings-group {

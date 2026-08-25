@@ -119,22 +119,15 @@ class Blob2D {
   }
 }
 
-function hexToRgb(hex: string): [number, number, number] {
-  const clean = hex.trim().replace('#', '')
-  const full = clean.length === 3 ? clean.split('').map((c) => c + c).join('') : clean
-  const num = parseInt(full, 16)
-  return [((num >> 16) & 255) / 255, ((num >> 8) & 255) / 255, (num & 255) / 255]
-}
-
-function readThemeColors(): [number, number, number][] {
-  const style = getComputedStyle(document.documentElement)
-  const names = ['--accent', '--success', '--mistake']
-  const colors = names
-    .map((name) => style.getPropertyValue(name).trim())
-    .filter(Boolean)
-    .map(hexToRgb)
-  return colors.length ? colors : [[0.43, 0.37, 0.99]]
-}
+// The vivid "Cósmico" palette from the reference metaball background,
+// used as-is regardless of theme so the blobs stay saturated instead of
+// washing out to the muted UI accent colors.
+const COSMIC_PALETTE: [number, number, number][] = [
+  [0.54, 0.23, 0.96], // Violet
+  [0.92, 0.28, 0.6], // Pink
+  [0.18, 0.7, 0.96], // Cyan
+  [0.65, 0.18, 0.88], // Purple
+]
 
 interface MetaballBackgroundProps {
   settings: BackgroundSettings
@@ -193,7 +186,7 @@ export function MetaballBackground({ settings, theme }: MetaballBackgroundProps)
     const speed = isRandom ? 0.3 + Math.random() * 0.9 : settings.speed
     const gooiness = isRandom ? 2.0 + Math.random() * 1.5 : settings.gooiness
 
-    const colors = readThemeColors()
+    const colors = COSMIC_PALETTE
     let blobs = Array.from({ length: count }, () => new Blob2D(baseRadius, colors))
 
     const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
@@ -235,7 +228,7 @@ export function MetaballBackground({ settings, theme }: MetaballBackgroundProps)
       gl!.uniform2f(uResolution, canvas!.width, canvas!.height)
       gl!.uniform1i(uBlobCount, blobs.length)
       gl!.uniform1f(uGooiness, gooiness)
-      gl!.uniform1f(uOpacity, theme === 'dark' ? 0.55 : 0.4)
+      gl!.uniform1f(uOpacity, theme === 'dark' ? 0.75 : 0.55)
       gl!.uniform3fv(uBlobsLoc, blobData)
       gl!.uniform3fv(uColorsLoc, colorData)
 
