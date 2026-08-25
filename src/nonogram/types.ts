@@ -34,4 +34,11 @@ export interface RunRecord {
   timeMs: number
   mistakes: number
   completedAt: string
+  /** Only set for generated puzzles, which aren't in the static library. */
+  puzzleSnapshot?: {
+    width: number
+    height: number
+    /** Bit-packed, base64-encoded solution grid. See nonogram/encode.ts. */
+    solution: string
+  }
 }

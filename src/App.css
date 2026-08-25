@@ -332,6 +332,20 @@ button {
   padding: 0.4rem 0.6rem;
 }
 
+.stats-button {
+  border: none;
+  background: var(--bg);
+  border-radius: var(--radius-sm);
+  padding: 0.4rem 0.55rem;
+  font-size: 0.95rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.stats-button:active {
+  transform: scale(0.95);
+}
+
 /* ---------- Nonogram board ---------- */
 
 .nonogram {
@@ -612,6 +626,120 @@ button {
 .run-history-mistakes {
   color: var(--ink-soft);
   opacity: 0.7;
+}
+
+.view-stats-link {
+  width: 100%;
+  margin-top: 0.6rem;
+  padding: 0.4rem;
+  border: none;
+  background: transparent;
+  color: var(--accent);
+  font-family: inherit;
+  font-weight: 600;
+  font-size: 0.82rem;
+  cursor: pointer;
+  text-align: center;
+}
+
+/* ---------- Stats modal ---------- */
+
+.stats-modal {
+  max-width: 400px;
+  text-align: left;
+}
+
+.stats-modal h2 {
+  text-align: center;
+  font-size: 1.3rem;
+  margin: 0 0 1rem;
+}
+
+.stats-summary {
+  display: flex;
+  justify-content: space-around;
+  padding: 0.9rem 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 1rem;
+}
+
+.stats-summary > div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.stats-summary-value {
+  font-size: 1.15rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.stats-summary-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-soft);
+}
+
+.stats-run-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.stats-run-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.5rem;
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+}
+
+.stats-run-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.stats-run-time {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.95rem;
+}
+
+.stats-run-meta {
+  font-size: 0.75rem;
+  color: var(--ink-soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.run-preview {
+  flex-shrink: 0;
+  display: grid;
+  grid-template-columns: repeat(var(--pw), 1fr);
+  grid-template-rows: repeat(var(--ph), 1fr);
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.run-preview-cell.filled {
+  background: var(--ink);
 }
 
 .modal-actions {

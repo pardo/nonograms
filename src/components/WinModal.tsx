@@ -9,6 +9,7 @@ interface WinModalProps {
   onPlayAgain: () => void
   onBackToMenu: () => void
   onNewRandom: () => void
+  onViewStats: () => void
 }
 
 export function WinModal({
@@ -18,6 +19,7 @@ export function WinModal({
   onPlayAgain,
   onBackToMenu,
   onNewRandom,
+  onViewStats,
 }: WinModalProps) {
   const best = bestTime(history)
   const isNewBest = best === undefined || elapsedMs <= best
@@ -42,6 +44,11 @@ export function WinModal({
                 </li>
               ))}
             </ul>
+            {history.length > 1 && (
+              <button type="button" className="view-stats-link" onClick={onViewStats}>
+                View all {history.length} runs →
+              </button>
+            )}
           </div>
         )}
 

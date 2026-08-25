@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Grid } from './Grid'
+import { StatsModal } from './StatsModal'
 import { WinModal } from './WinModal'
 import { formatDuration, useTimer } from '../hooks/useTimer'
+import { encodeSolution } from '../nonogram/encode'
 import { isKnownSize } from '../nonogram/generator'
 import { addRunRecord, loadHistory, loadProgress, saveProgress } from '../nonogram/storage'
 import type { CellState, Difficulty, Puzzle, RunRecord } from '../nonogram/types'
@@ -23,6 +25,7 @@ export function PlayView({ puzzle, onBackToMenu, onCompleted, onNewRandom }: Pla
   const [mistakes, setMistakes] = useState(saved?.mistakes ?? 0)
   const [won, setWon] = useState(saved?.completed ?? false)
   const [history, setHistory] = useState<RunRecord[]>(() => loadHistory(puzzle.id))
+  const [showStats, setShowStats] = useState(false)
   const timer = useTimer(saved?.elapsedMs ?? 0)
 
   useEffect(() => {
@@ -46,11 +49,20 @@ export function PlayView({ puzzle, onBackToMenu, onCompleted, onNewRandom }: Pla
     timer.pause()
     setWon(true)
     onCompleted(puzzle.id)
+
+    // Generated puzzles aren't in the static library, so snapshot the
+    // solution (bit-packed base64, not raw JSON) to keep stats meaningful.
+    const puzzleSnapshot =
+      puzzle.category === 'Generated'
+        ? { width: puzzle.width, height: puzzle.height, solution: encodeSolution(puzzle.solution) }
+        : undefined
+
     setHistory(
       addRunRecord(puzzle.id, {
         timeMs: timer.elapsedMs,
         mistakes,
         completedAt: new Date().toISOString(),
+        puzzleSnapshot,
       }),
     )
   }
@@ -74,6 +86,9 @@ export function PlayView({ puzzle, onBackToMenu, onCompleted, onNewRandom }: Pla
         </button>
         <h2>{puzzle.title}</h2>
         <div className="stats">
+          <button type="button" className="stats-button" onClick={() => setShowStats(true)} title="Stats">
+            📊
+          </button>
           <span>⏱ {formatDuration(timer.elapsedMs)}</span>
           <span>✗ {mistakes}</span>
         </div>
@@ -96,7 +111,12 @@ export function PlayView({ puzzle, onBackToMenu, onCompleted, onNewRandom }: Pla
           onPlayAgain={handleRestart}
           onBackToMenu={onBackToMenu}
           onNewRandom={() => onNewRandom(randomSize, randomDifficulty)}
+          onViewStats={() => setShowStats(true)}
         />
+      )}
+
+      {showStats && (
+        <StatsModal title={puzzle.title} history={history} onClose={() => setShowStats(false)} />
       )}
     </div>
   )
