@@ -6,7 +6,7 @@ import {
   priorFor,
   scoreReport,
 } from './difficulty'
-import { decodeSolution } from './encode'
+import { decodeSolution, encodeSolution } from './encode'
 import { analyze } from './solver'
 import type { Difficulty, Puzzle } from './types'
 
@@ -163,8 +163,13 @@ export function generateRandomPuzzle(size: number, difficulty: Difficulty): Puzz
 }
 
 function buildPuzzle(size: number, difficulty: Difficulty, solution: boolean[][]): Puzzle {
+  // Same id scheme as puzzleFromEncoded (derived from the solution itself,
+  // not a timestamp), so a freshly generated puzzle and the same puzzle
+  // reloaded from its URL always agree on identity - otherwise progress and
+  // history saved right after generating would be orphaned the moment the
+  // URL round-trips through #/g/... on reload. See routing.ts.
   return {
-    id: `generated-${difficulty}-${size}-${Date.now()}-${Math.floor(Math.random() * 1e6)}`,
+    id: `generated-${size}-${difficulty}-${encodeSolution(solution)}`,
     title: `Random ${size}x${size}`,
     width: size,
     height: size,

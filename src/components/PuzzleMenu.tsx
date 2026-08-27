@@ -3,7 +3,7 @@ import { BackgroundSettingsButton } from './BackgroundSettingsButton'
 import { ThemeToggle } from './ThemeToggle'
 import { DIFFICULTIES, SIZES } from '../nonogram/generator'
 import { puzzleHash, randomHash } from '../nonogram/routing'
-import { bestTime, loadHistory } from '../nonogram/storage'
+import { bestTime, loadHistory, loadModeHistory, modeKey } from '../nonogram/storage'
 import { formatDuration } from '../hooks/useTimer'
 import type { BackgroundSettings } from '../hooks/useBackgroundSettings'
 import type { Difficulty, Puzzle } from '../nonogram/types'
@@ -58,21 +58,25 @@ export function PuzzleMenu({
                 {size}x{size}
               </span>
               <div className="generate-row-buttons">
-                {DIFFICULTIES.map((d) => (
-                  <a
-                    key={d.id}
-                    className="difficulty-button"
-                    href={randomHash(size, d.id)}
-                    data-difficulty={d.id}
-                    title={d.blurb}
-                    onClick={(e) => {
-                      e.preventDefault()
-                      onGenerate(size, d.id)
-                    }}
-                  >
-                    {d.label}
-                  </a>
-                ))}
+                {DIFFICULTIES.map((d) => {
+                  const best = bestTime(loadModeHistory(modeKey(size, d.id)))
+                  return (
+                    <a
+                      key={d.id}
+                      className="difficulty-button"
+                      href={randomHash(size, d.id)}
+                      data-difficulty={d.id}
+                      title={d.blurb}
+                      onClick={(e) => {
+                        e.preventDefault()
+                        onGenerate(size, d.id)
+                      }}
+                    >
+                      {d.label}
+                      {best !== undefined && <span className="difficulty-best">{formatDuration(best)}</span>}
+                    </a>
+                  )
+                })}
               </div>
             </div>
           ))}

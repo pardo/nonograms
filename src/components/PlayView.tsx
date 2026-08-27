@@ -7,7 +7,15 @@ import { WinModal } from './WinModal'
 import { formatDuration, useTimer } from '../hooks/useTimer'
 import { encodeSolution } from '../nonogram/encode'
 import { isKnownSize } from '../nonogram/generator'
-import { addRunRecord, loadHistory, loadProgress, saveProgress } from '../nonogram/storage'
+import {
+  addModeRunRecord,
+  addRunRecord,
+  loadHistory,
+  loadModeHistory,
+  loadProgress,
+  modeKey,
+  saveProgress,
+} from '../nonogram/storage'
 import type { BackgroundSettings } from '../hooks/useBackgroundSettings'
 import type { CellState, Difficulty, Puzzle, RunRecord } from '../nonogram/types'
 
@@ -40,9 +48,21 @@ export function PlayView({
   const [grid, setGrid] = useState<CellState[][]>(saved?.grid ?? emptyGrid(puzzle.width, puzzle.height))
   const [mistakes, setMistakes] = useState(saved?.mistakes ?? 0)
   const [won, setWon] = useState(saved?.completed ?? false)
-  const [history, setHistory] = useState<RunRecord[]>(() => loadHistory(puzzle.id))
   const [showStats, setShowStats] = useState(false)
   const timer = useTimer(saved?.elapsedMs ?? 0)
+
+  const randomSize = isKnownSize(puzzle.width) ? puzzle.width : 10
+  const randomDifficulty: Difficulty = puzzle.difficulty ?? 'medium'
+
+  // Generated puzzles get a fresh one-off id every time (see routing.ts), so
+  // per-instance history never builds up a track record - track by mode
+  // (size + difficulty) instead, so scores are checkable across every
+  // random puzzle of that kind you've played, not just this exact one.
+  const isGenerated = puzzle.category === 'Generated'
+  const mode = modeKey(randomSize, randomDifficulty)
+  const [history, setHistory] = useState<RunRecord[]>(() =>
+    isGenerated ? loadModeHistory(mode) : loadHistory(puzzle.id),
+  )
 
   useEffect(() => {
     if (!won) timer.start()
@@ -68,19 +88,23 @@ export function PlayView({
 
     // Generated puzzles aren't in the static library, so snapshot the
     // solution (bit-packed base64, not raw JSON) to keep stats meaningful.
-    const puzzleSnapshot =
-      puzzle.category === 'Generated'
-        ? { width: puzzle.width, height: puzzle.height, solution: encodeSolution(puzzle.solution) }
-        : undefined
+    const puzzleSnapshot = isGenerated
+      ? { width: puzzle.width, height: puzzle.height, solution: encodeSolution(puzzle.solution) }
+      : undefined
 
-    setHistory(
-      addRunRecord(puzzle.id, {
-        timeMs: timer.elapsedMs,
-        mistakes,
-        completedAt: new Date().toISOString(),
-        puzzleSnapshot,
-      }),
-    )
+    const record: RunRecord = {
+      timeMs: timer.elapsedMs,
+      mistakes,
+      completedAt: new Date().toISOString(),
+      puzzleSnapshot,
+    }
+
+    if (isGenerated) {
+      addRunRecord(puzzle.id, record)
+      setHistory(addModeRunRecord(mode, record))
+    } else {
+      setHistory(addRunRecord(puzzle.id, record))
+    }
   }
 
   const handleRestart = () => {
@@ -90,9 +114,6 @@ export function PlayView({
     timer.reset(0)
     timer.start()
   }
-
-  const randomSize = isKnownSize(puzzle.width) ? puzzle.width : 10
-  const randomDifficulty: Difficulty = puzzle.difficulty ?? 'medium'
 
   return (
     <div className="play-view">
@@ -134,7 +155,15 @@ export function PlayView({
       )}
 
       {showStats && (
-        <StatsModal title={puzzle.title} history={history} onClose={() => setShowStats(false)} />
+        <StatsModal
+          title={
+            isGenerated
+              ? `${randomSize}x${randomSize} ${randomDifficulty.charAt(0).toUpperCase()}${randomDifficulty.slice(1)}`
+              : puzzle.title
+          }
+          history={history}
+          onClose={() => setShowStats(false)}
+        />
       )}
     </div>
   )
