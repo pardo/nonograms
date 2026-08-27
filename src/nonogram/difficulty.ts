@@ -49,31 +49,44 @@ interface Band {
   max: number
   /** Expert additionally requires hypothesis reasoning; the rest must not need it. */
   requireDepth?: boolean
+  /**
+   * Expert only: how many separate contradiction breakthroughs it must take.
+   * Requiring more than one keeps Expert clear of Hard - a single lucky
+   * hypothesis that unlocks the whole board is not much of a step up.
+   */
+  minContradictions?: number
 }
 
 /**
- * Score windows per board size, read off the score distribution of thousands
- * of sampled solvable puzzles (roughly: easy <= p20, medium p35-p60,
- * hard >= p85, expert = not line-solvable at all).
+ * Score windows per board size, read off the measured score distribution of
+ * sampled solvable puzzles at that size.
+ *
+ * The ladder starts where the *old* Medium sat: the gentlest tier used to be
+ * so blocky that it barely counted as a puzzle, so every rung moved up one and
+ * a genuinely harder top was added. Easy is a calm solve, Medium is the old
+ * Hard, and Hard now sits in the top tenth of what line logic can still crack
+ * (p90-p97 of the sampled distribution) - long, fragmented, a cell at a time.
  */
 const BANDS: Record<number, Record<Difficulty, Band>> = {
   5: {
-    easy: { min: 0, max: 4.2 },
-    medium: { min: 5.4, max: 6.2 },
-    hard: { min: 8.5, max: Infinity },
-    expert: { min: 12, max: Infinity, requireDepth: true },
+    easy: { min: 5.2, max: 6.6 },
+    medium: { min: 7.6, max: 9.2 },
+    hard: { min: 10.5, max: Infinity },
+    // A 5x5 has no room for two independent stalls - grids needing even one are
+    // already ~0.5% of samples - so Expert asks for a single breakthrough here.
+    expert: { min: 12, max: Infinity, requireDepth: true, minContradictions: 1 },
   },
   10: {
-    easy: { min: 0, max: 6.0 },
-    medium: { min: 8.0, max: 9.2 },
-    hard: { min: 12.5, max: Infinity },
-    expert: { min: 12, max: Infinity, requireDepth: true },
+    easy: { min: 7.8, max: 9.4 },
+    medium: { min: 12.5, max: 16.0 },
+    hard: { min: 20.0, max: Infinity },
+    expert: { min: 12, max: Infinity, requireDepth: true, minContradictions: 2 },
   },
   15: {
-    easy: { min: 0, max: 7.5 },
-    medium: { min: 10.0, max: 11.8 },
-    hard: { min: 17.0, max: Infinity },
-    expert: { min: 12, max: Infinity, requireDepth: true },
+    easy: { min: 9.6, max: 11.8 },
+    medium: { min: 17.0, max: 20.5 },
+    hard: { min: 27.0, max: Infinity },
+    expert: { min: 12, max: Infinity, requireDepth: true, minContradictions: 2 },
   },
 }
 
@@ -89,7 +102,9 @@ export function matchesDifficulty(
 ): boolean {
   if (!report.solved) return false
   const band = bandFor(size, difficulty)
-  if (band.requireDepth) return report.depth > 0
+  if (band.requireDepth) {
+    return report.depth > 0 && report.contradictions >= (band.minContradictions ?? 1)
+  }
   // Easy/Medium/Hard promise "no guessing required", so hypothesis puzzles are
   // never labelled as one of them regardless of score.
   if (report.depth > 0) return false
@@ -107,6 +122,11 @@ export function distanceToBand(
   const band = bandFor(size, difficulty)
   if (band.requireDepth && report.depth === 0) return Infinity
   if (!band.requireDepth && report.depth > 0) return Infinity
+  if (band.requireDepth) {
+    // A depth-1 puzzle with too few breakthroughs is still the best fallback
+    // available, so rank it by how far short it falls rather than rejecting it.
+    return Math.max(0, (band.minContradictions ?? 1) - report.contradictions)
+  }
   const score = scoreReport(report, size)
   if (score < band.min) return band.min - score
   if (score > band.max) return score - band.max
@@ -126,10 +146,13 @@ export interface SamplingPrior {
 }
 
 const PRIORS: Record<Difficulty, SamplingPrior> = {
-  easy: { density: [0.55, 0.7], smoothing: [2, 2, 3] },
-  medium: { density: [0.5, 0.66], smoothing: [1, 1, 2] },
-  hard: { density: [0.42, 0.58], smoothing: [0, 0, 1] },
-  expert: { density: [0.42, 0.58], smoothing: [0, 0, 1] },
+  easy: { density: [0.5, 0.66], smoothing: [1, 1, 2] },
+  medium: { density: [0.42, 0.58], smoothing: [0, 0, 1] },
+  // The hard tail lives at low density with no smoothing: speckled grids whose
+  // clues are long lists of small blocks. Most such grids are ambiguous and get
+  // rejected, which is exactly why the survivors are hard.
+  hard: { density: [0.42, 0.52], smoothing: [0] },
+  expert: { density: [0.46, 0.56], smoothing: [0] },
 }
 
 export function priorFor(difficulty: Difficulty): SamplingPrior {
@@ -138,8 +161,8 @@ export function priorFor(difficulty: Difficulty): SamplingPrior {
 
 /** One-line explanation of what each tier actually demands, for the UI. */
 export const DIFFICULTY_BLURB: Record<Difficulty, string> = {
-  easy: 'Solid shapes. Most rows fall out on the first pass.',
-  medium: 'Some back-and-forth between rows and columns.',
-  hard: 'Fragmented clues. Many passes, a cell or two at a time.',
-  expert: 'Stalls out. You must assume a cell and disprove it.',
+  easy: 'Steady going. Some back-and-forth between rows and columns.',
+  medium: 'Fragmented clues. Several passes to unpick.',
+  hard: 'A long grind. Many passes, a cell or two at a time.',
+  expert: 'Stalls out. You must assume a cell and disprove it, more than once.',
 }
