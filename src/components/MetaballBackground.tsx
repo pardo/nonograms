@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { PALETTE_KEYS, PALETTES } from '../backgroundPalettes'
 import type { BackgroundSettings } from '../hooks/useBackgroundSettings'
 import { CssBlobBackground } from './CssBlobBackground'
 
@@ -116,16 +117,6 @@ class Blob2D {
   }
 }
 
-// The vivid "Cósmico" palette from the reference metaball background,
-// used as-is regardless of theme so the blobs stay saturated instead of
-// washing out to the muted UI accent colors.
-const COSMIC_PALETTE: [number, number, number][] = [
-  [0.54, 0.23, 0.96], // Violet
-  [0.92, 0.28, 0.6], // Pink
-  [0.18, 0.7, 0.96], // Cyan
-  [0.65, 0.18, 0.88], // Purple
-]
-
 interface MetaballBackgroundProps {
   settings: BackgroundSettings
   theme: 'light' | 'dark'
@@ -182,8 +173,11 @@ export function MetaballBackground({ settings, theme }: MetaballBackgroundProps)
     const baseRadius = isRandom ? 0.1 + Math.random() * 0.12 : settings.size
     const speed = isRandom ? 0.3 + Math.random() * 0.9 : settings.speed
     const gooiness = isRandom ? 2.0 + Math.random() * 1.5 : settings.gooiness
+    const paletteKey = isRandom
+      ? PALETTE_KEYS[Math.floor(Math.random() * PALETTE_KEYS.length)]
+      : settings.palette
 
-    const colors = COSMIC_PALETTE
+    const colors = PALETTES[paletteKey]
     let blobs = Array.from({ length: count }, () => new Blob2D(baseRadius, colors))
 
     const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
@@ -245,7 +239,15 @@ export function MetaballBackground({ settings, theme }: MetaballBackgroundProps)
     // Re-run the whole effect whenever mode, theme, or (in custom mode) the
     // sliders change. "random" mode intentionally re-seeds on every mount.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [settings.mode, settings.count, settings.size, settings.speed, settings.gooiness, theme])
+  }, [
+    settings.mode,
+    settings.count,
+    settings.size,
+    settings.speed,
+    settings.gooiness,
+    settings.palette,
+    theme,
+  ])
 
   if (settings.mode === 'off') return null
   if (webglFailed) return <CssBlobBackground />

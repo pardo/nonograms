@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { PALETTE_KEYS, PALETTE_LABELS, PALETTES } from '../backgroundPalettes'
 import type { BackgroundMode, BackgroundSettings } from '../hooks/useBackgroundSettings'
 
 interface BackgroundSettingsButtonProps {
@@ -54,52 +55,80 @@ export function BackgroundSettingsButton({ settings, onUpdate }: BackgroundSetti
           </div>
 
           {settings.mode === 'custom' && (
-            <div className="bg-settings-sliders">
-              <label>
-                <span>Blobs</span>
-                <input
-                  type="range"
-                  min={2}
-                  max={10}
-                  step={1}
-                  value={settings.count}
-                  onChange={(e) => onUpdate({ count: Number(e.target.value) })}
-                />
-              </label>
-              <label>
-                <span>Size</span>
-                <input
-                  type="range"
-                  min={0.08}
-                  max={0.26}
-                  step={0.01}
-                  value={settings.size}
-                  onChange={(e) => onUpdate({ size: Number(e.target.value) })}
-                />
-              </label>
-              <label>
-                <span>Speed</span>
-                <input
-                  type="range"
-                  min={0.1}
-                  max={2}
-                  step={0.1}
-                  value={settings.speed}
-                  onChange={(e) => onUpdate({ speed: Number(e.target.value) })}
-                />
-              </label>
-              <label>
-                <span>Blend</span>
-                <input
-                  type="range"
-                  min={1.6}
-                  max={4}
-                  step={0.1}
-                  value={settings.gooiness}
-                  onChange={(e) => onUpdate({ gooiness: Number(e.target.value) })}
-                />
-              </label>
-            </div>
+            <>
+              <div className="bg-settings-palettes" role="radiogroup" aria-label="Background palette">
+                {PALETTE_KEYS.map((key) => (
+                  <button
+                    key={key}
+                    type="button"
+                    className={
+                      settings.palette === key ? 'bg-settings-palette active' : 'bg-settings-palette'
+                    }
+                    aria-pressed={settings.palette === key}
+                    onClick={() => onUpdate({ palette: key })}
+                  >
+                    <span className="bg-settings-palette-name">{PALETTE_LABELS[key]}</span>
+                    <span className="bg-settings-palette-swatch">
+                      {PALETTES[key].map((rgb, i) => (
+                        <span
+                          key={i}
+                          style={{
+                            background: `rgb(${Math.round(rgb[0] * 255)}, ${Math.round(rgb[1] * 255)}, ${Math.round(rgb[2] * 255)})`,
+                          }}
+                        />
+                      ))}
+                    </span>
+                  </button>
+                ))}
+              </div>
+
+              <div className="bg-settings-sliders">
+                <label>
+                  <span>Blobs</span>
+                  <input
+                    type="range"
+                    min={2}
+                    max={10}
+                    step={1}
+                    value={settings.count}
+                    onChange={(e) => onUpdate({ count: Number(e.target.value) })}
+                  />
+                </label>
+                <label>
+                  <span>Size</span>
+                  <input
+                    type="range"
+                    min={0.08}
+                    max={0.26}
+                    step={0.01}
+                    value={settings.size}
+                    onChange={(e) => onUpdate({ size: Number(e.target.value) })}
+                  />
+                </label>
+                <label>
+                  <span>Speed</span>
+                  <input
+                    type="range"
+                    min={0.1}
+                    max={2}
+                    step={0.1}
+                    value={settings.speed}
+                    onChange={(e) => onUpdate({ speed: Number(e.target.value) })}
+                  />
+                </label>
+                <label>
+                  <span>Blend</span>
+                  <input
+                    type="range"
+                    min={1.6}
+                    max={4}
+                    step={0.1}
+                    value={settings.gooiness}
+                    onChange={(e) => onUpdate({ gooiness: Number(e.target.value) })}
+                  />
+                </label>
+              </div>
+            </>
           )}
         </div>
       )}

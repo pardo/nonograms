@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import type { PaletteKey } from '../backgroundPalettes'
 
 export type BackgroundMode = 'off' | 'custom' | 'random'
 
@@ -8,6 +9,7 @@ export interface BackgroundSettings {
   size: number
   speed: number
   gooiness: number
+  palette: PaletteKey
 }
 
 const KEY = 'nonogram-bg-settings'
@@ -18,6 +20,7 @@ export const DEFAULT_BACKGROUND_SETTINGS: BackgroundSettings = {
   size: 0.16,
   speed: 0.6,
   gooiness: 2.6,
+  palette: 'cosmic',
 }
 
 function loadSettings(): BackgroundSettings {

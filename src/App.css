@@ -313,6 +313,51 @@ body:has(.bg-settings-panel) .nonogram {
   accent-color: var(--accent);
 }
 
+.bg-settings-palettes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+
+.bg-settings-palette {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.45rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 0.6rem;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+}
+
+.bg-settings-palette.active {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.bg-settings-palette-name {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.bg-settings-palette-swatch {
+  display: flex;
+  height: 0.4rem;
+  border-radius: 999px;
+  overflow: hidden;
+  gap: 1px;
+}
+
+.bg-settings-palette-swatch span {
+  flex: 1;
+}
+
 .bg-settings-sliders {
   display: flex;
   flex-direction: column;
