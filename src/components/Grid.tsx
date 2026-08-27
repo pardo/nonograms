@@ -14,12 +14,15 @@ const TOOL_STATE: Record<Tool, CellState> = {
   maybe: 'maybe',
 }
 
-const TOOLS: { id: Tool; label: string; hint: string }[] = [
-  { id: 'fill', label: '▉ Fill', hint: 'Fill a cell for real. A wrong fill counts as a mistake.' },
-  { id: 'mark', label: '✕ Mark', hint: 'Mark a cell as definitely empty.' },
+// Icon and word are separate so narrow screens can drop the word without
+// changing the toolbar's height (see the phone media query in App.css).
+const TOOLS: { id: Tool; icon: string; label: string; hint: string }[] = [
+  { id: 'fill', icon: '▉', label: 'Fill', hint: 'Fill a cell for real. A wrong fill counts as a mistake.' },
+  { id: 'mark', icon: '✕', label: 'Mark', hint: 'Mark a cell as definitely empty.' },
   {
     id: 'maybe',
-    label: '? Maybe',
+    icon: '?',
+    label: 'Maybe',
     hint: 'Pencil in a tentative fill while you test an assumption. Costs nothing if you are wrong.',
   },
 ]
@@ -172,31 +175,46 @@ export function Grid({ puzzle, grid, onChange, onMistake, onWin, disabled }: Gri
               data-tool={t.id}
               title={t.hint}
               aria-pressed={tool === t.id}
+              aria-label={t.label}
               onClick={() => setTool(t.id)}
             >
-              {t.label}
+              <span className="tool-icon" aria-hidden="true">
+                {t.icon}
+              </span>
+              <span className="tool-label">{t.label}</span>
             </button>
           ))}
         </div>
 
         {maybeCells.length > 0 && !disabled && (
           <div className="maybe-actions" role="group" aria-label="Resolve tentative cells">
-            <span className="maybe-count">{maybeCells.length} tentative</span>
+            <span className="maybe-count">
+              {maybeCells.length}
+              <span className="maybe-count-word"> tentative</span>
+            </span>
             <button
               type="button"
               className="maybe-action commit"
               title="Turn every tentative cell into a real fill"
+              aria-label="Commit tentative cells"
               onClick={() => resolveMaybes('filled')}
             >
-              ✓ Commit
+              <span className="action-icon" aria-hidden="true">
+                ✓
+              </span>
+              <span className="action-label">Commit</span>
             </button>
             <button
               type="button"
               className="maybe-action discard"
               title="Clear every tentative cell"
+              aria-label="Discard tentative cells"
               onClick={() => resolveMaybes('empty')}
             >
-              ⌫ Discard
+              <span className="action-icon" aria-hidden="true">
+                ⌫
+              </span>
+              <span className="action-label">Discard</span>
             </button>
           </div>
         )}

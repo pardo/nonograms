@@ -746,16 +746,21 @@ body:has(.bg-settings-panel) .nonogram {
   gap: 1rem;
 }
 
+/* Three columns so the tool group sits in a fixed spot: the tentative
+   actions appear in the right gutter instead of re-centering the toolbar or
+   wrapping onto a second line, either of which would move the board. */
 .toolbar-row {
   flex-shrink: 0;
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
-  justify-content: center;
   gap: 0.6rem;
-  flex-wrap: wrap;
+  width: 100%;
 }
 
 .toolbar {
+  grid-column: 2;
+  justify-self: center;
   flex-shrink: 0;
   display: inline-flex;
   gap: 2px;
@@ -778,6 +783,9 @@ body:has(.bg-settings-panel) .nonogram {
 }
 
 .tool {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
   padding: 0.5rem 1.1rem;
   border: none;
   border-radius: calc(var(--radius-md) - 3px);
@@ -803,6 +811,8 @@ body:has(.bg-settings-panel) .nonogram {
 }
 
 .maybe-actions {
+  grid-column: 3;
+  justify-self: start;
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
@@ -821,6 +831,9 @@ body:has(.bg-settings-panel) .nonogram {
 }
 
 .maybe-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
   padding: 0.45rem 0.7rem;
   border: none;
   border-radius: calc(var(--radius-md) - 3px);
@@ -1281,6 +1294,43 @@ body:has(.bg-settings-panel) .nonogram {
   to {
     opacity: 1;
     transform: scale(1) translateY(0);
+  }
+}
+
+/* ---------- Narrow windows and phones ---------- */
+
+/* Words drop off the buttons as the window narrows so the tool group and the
+   tentative actions always share one row. Keeping them on one row is what
+   stops the board from jumping down the moment a tentative cell exists. The
+   tentative actions shed their words first: they sit in a side gutter half the
+   width of the row, so they run out of room well before the tools do. */
+@media (max-width: 939px) {
+  .action-label,
+  .maybe-count-word {
+    display: none;
+  }
+
+  .maybe-actions {
+    gap: 0.25rem;
+    padding: 3px 3px 3px 0.45rem;
+  }
+
+  .maybe-action {
+    padding: 0.45rem 0.5rem;
+  }
+}
+
+@media (max-width: 560px) {
+  .toolbar-row {
+    gap: 0.35rem;
+  }
+
+  .tool {
+    padding: 0.5rem 0.75rem;
+  }
+
+  .tool-label {
+    display: none;
   }
 }
 
