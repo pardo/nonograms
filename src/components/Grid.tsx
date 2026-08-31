@@ -5,13 +5,20 @@ import type { CellState, Puzzle } from '../nonogram/types'
 const MIN_CELL = 16
 const MAX_CELL = 72
 
-type Tool = 'fill' | 'mark' | 'maybe'
+type Tool = 'fill' | 'mark' | 'maybe' | 'maybe-mark'
 
 /** State each tool paints when it sets (rather than clears) a cell. */
 const TOOL_STATE: Record<Tool, CellState> = {
   fill: 'filled',
   mark: 'marked',
   maybe: 'maybe',
+  'maybe-mark': 'maybe-mark',
+}
+
+/** What each tentative state becomes once the hypothesis is committed. */
+const COMMITTED_STATE: Record<'maybe' | 'maybe-mark', CellState> = {
+  maybe: 'filled',
+  'maybe-mark': 'marked',
 }
 
 // Icon and word are separate so narrow screens can drop the word without
@@ -21,9 +28,15 @@ const TOOLS: { id: Tool; icon: string; label: string; hint: string }[] = [
   { id: 'mark', icon: '✕', label: 'Mark', hint: 'Mark a cell as definitely empty.' },
   {
     id: 'maybe',
-    icon: '?',
-    label: 'Maybe',
+    icon: '?▉',
+    label: 'Maybe fill',
     hint: 'Pencil in a tentative fill while you test an assumption. Costs nothing if you are wrong.',
+  },
+  {
+    id: 'maybe-mark',
+    icon: '?✕',
+    label: 'Maybe X',
+    hint: 'Pencil in a tentative X while you test an assumption. Costs nothing if you are wrong.',
   },
 ]
 
@@ -91,12 +104,13 @@ export function Grid({ puzzle, grid, onChange, onMistake, onWin, disabled }: Gri
   }, [disabled])
 
   // Cells currently held as a hypothesis, so they can be committed or dropped
-  // in one go once the assumption pans out (or doesn't).
+  // in one go once the assumption pans out (or doesn't). Tentative fills and
+  // tentative marks resolve together: they belong to the same hypothesis.
   const maybeCells = useMemo(() => {
-    const found: { r: number; c: number }[] = []
+    const found: { r: number; c: number; state: 'maybe' | 'maybe-mark' }[] = []
     grid.forEach((row, r) =>
       row.forEach((state, c) => {
-        if (state === 'maybe') found.push({ r, c })
+        if (state === 'maybe' || state === 'maybe-mark') found.push({ r, c, state })
       }),
     )
     return found
@@ -122,16 +136,19 @@ export function Grid({ puzzle, grid, onChange, onMistake, onWin, disabled }: Gri
   }
 
   /**
-   * Turns every tentative cell into a real fill, or wipes them. Committing is
-   * the moment a hypothesis becomes a claim, so this is where a wrong guess
-   * finally scores its mistakes.
+   * Turns every tentative cell into the real thing it stands for - a fill for
+   * 'maybe', an X for 'maybe-mark' - or wipes them all. Committing is the
+   * moment a hypothesis becomes a claim, so this is where a wrong guess
+   * finally scores its mistakes. Only fills can be wrong: a committed X costs
+   * nothing, exactly as marking by hand does.
    */
-  const resolveMaybes = (target: 'filled' | 'empty') => {
+  const resolveMaybes = (mode: 'commit' | 'discard') => {
     if (disabled || maybeCells.length === 0) return
 
     const next = cloneGrid(grid)
     let wrong = 0
-    for (const { r, c } of maybeCells) {
+    for (const { r, c, state } of maybeCells) {
+      const target: CellState = mode === 'discard' ? 'empty' : COMMITTED_STATE[state]
       next[r][c] = target
       if (target === 'filled' && !puzzle.solution[r][c]) wrong++
     }
@@ -195,9 +212,9 @@ export function Grid({ puzzle, grid, onChange, onMistake, onWin, disabled }: Gri
             <button
               type="button"
               className="maybe-action commit"
-              title="Turn every tentative cell into a real fill"
+              title="Turn every tentative cell into a real fill or X"
               aria-label="Commit tentative cells"
-              onClick={() => resolveMaybes('filled')}
+              onClick={() => resolveMaybes('commit')}
             >
               <span className="action-icon" aria-hidden="true">
                 ✓
@@ -209,7 +226,7 @@ export function Grid({ puzzle, grid, onChange, onMistake, onWin, disabled }: Gri
               className="maybe-action discard"
               title="Clear every tentative cell"
               aria-label="Discard tentative cells"
-              onClick={() => resolveMaybes('empty')}
+              onClick={() => resolveMaybes('discard')}
             >
               <span className="action-icon" aria-hidden="true">
                 ⌫
