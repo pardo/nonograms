@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { computeClues, isLineSatisfied, isPuzzleSolved } from '../nonogram/clues'
-import type { CellState, Puzzle } from '../nonogram/types'
+import type { CellState, CoveredCells, Puzzle } from '../nonogram/types'
 
 const MIN_CELL = 16
 const MAX_CELL = 72
@@ -24,6 +24,15 @@ const COMMITTED_STATE: Record<'maybe' | 'maybe-mark', CellState> = {
   'maybe-mark': 'marked',
 }
 
+function isTentative(state: CellState): state is 'maybe' | 'maybe-mark' {
+  return state === 'maybe' || state === 'maybe-mark'
+}
+
+/** Key into the covered map. */
+function cellKey(r: number, c: number): string {
+  return `${r},${c}`
+}
+
 // Icon and word are separate so narrow screens can drop the word without
 // changing the toolbar's height (see the phone media query in App.css).
 const TOOLS: { id: Tool; icon: string; label: string; hint: string }[] = [
@@ -34,7 +43,9 @@ const TOOLS: { id: Tool; icon: string; label: string; hint: string }[] = [
 interface GridProps {
   puzzle: Puzzle
   grid: CellState[][]
-  onChange: (grid: CellState[][]) => void
+  /** What each tentative cell is sitting on top of. See PuzzleProgress. */
+  covered: CoveredCells
+  onChange: (grid: CellState[][], covered: CoveredCells) => void
   onMistake: () => void
   onWin: () => void
   disabled?: boolean
@@ -50,7 +61,7 @@ function cloneGrid(grid: CellState[][]): CellState[][] {
 const hoverCapable =
   typeof window !== 'undefined' && window.matchMedia?.('(hover: hover) and (pointer: fine)').matches
 
-export function Grid({ puzzle, grid, onChange, onMistake, onWin, disabled }: GridProps) {
+export function Grid({ puzzle, grid, covered, onChange, onMistake, onWin, disabled }: GridProps) {
   const [tool, setTool] = useState<Tool>('fill')
   const [pencil, setPencil] = useState(false)
   const [hovered, setHovered] = useState<{ r: number; c: number } | null>(null)
@@ -112,14 +123,32 @@ export function Grid({ puzzle, grid, onChange, onMistake, onWin, disabled }: Gri
 
   const applyToCell = (r: number, c: number, action: PaintAction, state: CellState = painting) => {
     const current = grid[r][c]
-    const targetState: CellState = action === 'clear' ? 'empty' : state
+    const key = cellKey(r, c)
+    // Clearing a tentative cell undoes the pencil stroke, which means putting
+    // back whatever it was drawn over - a hypothesis must never cost you work
+    // you had already committed.
+    const targetState: CellState =
+      action === 'clear' ? (isTentative(current) ? (covered[key] ?? 'empty') : 'empty') : state
     if (current === targetState) return
+
+    const nextCovered = { ...covered }
+    if (isTentative(targetState)) {
+      // Pencilling over a pencil stroke keeps the original cell underneath.
+      if (!isTentative(current)) {
+        if (current === 'empty') delete nextCovered[key]
+        else nextCovered[key] = current
+      }
+    } else {
+      delete nextCovered[key]
+    }
 
     const next = cloneGrid(grid)
     next[r][c] = targetState
-    onChange(next)
+    onChange(next, nextCovered)
 
-    if (targetState === 'filled' && !puzzle.solution[r][c]) {
+    // Restoring a covered fill is not a fresh claim, so it can't be a fresh
+    // mistake: it was already scored when it was first filled in.
+    if (action !== 'clear' && targetState === 'filled' && !puzzle.solution[r][c]) {
       onMistake()
     }
 
@@ -131,8 +160,9 @@ export function Grid({ puzzle, grid, onChange, onMistake, onWin, disabled }: Gri
 
   /**
    * Turns every tentative cell into the real thing it stands for - a fill for
-   * 'maybe', an X for 'maybe-mark' - or wipes them all. Committing is the
-   * moment a hypothesis becomes a claim, so this is where a wrong guess
+   * 'maybe', an X for 'maybe-mark' - or drops the whole hypothesis, putting
+   * each cell back the way it was before the pencil touched it. Committing is
+   * the moment a hypothesis becomes a claim, so this is where a wrong guess
    * finally scores its mistakes. Only fills can be wrong: a committed X costs
    * nothing, exactly as marking by hand does.
    */
@@ -142,11 +172,12 @@ export function Grid({ puzzle, grid, onChange, onMistake, onWin, disabled }: Gri
     const next = cloneGrid(grid)
     let wrong = 0
     for (const { r, c, state } of maybeCells) {
-      const target: CellState = mode === 'discard' ? 'empty' : COMMITTED_STATE[state]
+      const target: CellState =
+        mode === 'discard' ? (covered[cellKey(r, c)] ?? 'empty') : COMMITTED_STATE[state]
       next[r][c] = target
-      if (target === 'filled' && !puzzle.solution[r][c]) wrong++
+      if (mode === 'commit' && target === 'filled' && !puzzle.solution[r][c]) wrong++
     }
-    onChange(next)
+    onChange(next, {})
 
     for (let i = 0; i < wrong; i++) onMistake()
 

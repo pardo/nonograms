@@ -17,7 +17,7 @@ import {
   saveProgress,
 } from '../nonogram/storage'
 import type { BackgroundSettings } from '../hooks/useBackgroundSettings'
-import type { CellState, Difficulty, Puzzle, RunRecord } from '../nonogram/types'
+import type { CellState, CoveredCells, Difficulty, Puzzle, RunRecord } from '../nonogram/types'
 
 interface PlayViewProps {
   puzzle: Puzzle
@@ -46,6 +46,7 @@ export function PlayView({
 }: PlayViewProps) {
   const saved = loadProgress(puzzle.id)
   const [grid, setGrid] = useState<CellState[][]>(saved?.grid ?? emptyGrid(puzzle.width, puzzle.height))
+  const [covered, setCovered] = useState<CoveredCells>(saved?.covered ?? {})
   const [mistakes, setMistakes] = useState(saved?.mistakes ?? 0)
   const [won, setWon] = useState(saved?.completed ?? false)
   const [showStats, setShowStats] = useState(false)
@@ -74,6 +75,7 @@ export function PlayView({
     saveProgress({
       puzzleId: puzzle.id,
       grid,
+      covered,
       mistakes,
       elapsedMs: timer.elapsedMs,
       completed: won,
@@ -109,6 +111,7 @@ export function PlayView({
 
   const handleRestart = () => {
     setGrid(emptyGrid(puzzle.width, puzzle.height))
+    setCovered({})
     setMistakes(0)
     setWon(false)
     timer.reset(0)
@@ -136,7 +139,11 @@ export function PlayView({
       <Grid
         puzzle={puzzle}
         grid={grid}
-        onChange={setGrid}
+        covered={covered}
+        onChange={(nextGrid, nextCovered) => {
+          setGrid(nextGrid)
+          setCovered(nextCovered)
+        }}
         onMistake={() => setMistakes((m) => m + 1)}
         onWin={handleWin}
         disabled={won}

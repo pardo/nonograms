@@ -30,9 +30,17 @@ export interface PuzzleClues {
   cols: number[][]
 }
 
+/**
+ * What each tentative cell was drawn over, keyed `row,col` - only cells that
+ * covered something get an entry. Dropping a hypothesis puts these back, so
+ * pencilling over committed work can never destroy it.
+ */
+export type CoveredCells = Record<string, CellState>
+
 export interface PuzzleProgress {
   puzzleId: string
   grid: CellState[][]
+  covered?: CoveredCells
   mistakes: number
   elapsedMs: number
   completed: boolean
