@@ -5,14 +5,17 @@ import type { CellState, Puzzle } from '../nonogram/types'
 const MIN_CELL = 16
 const MAX_CELL = 72
 
-type Tool = 'fill' | 'mark' | 'maybe' | 'maybe-mark'
+type Tool = 'fill' | 'mark'
 
-/** State each tool paints when it sets (rather than clears) a cell. */
-const TOOL_STATE: Record<Tool, CellState> = {
-  fill: 'filled',
-  mark: 'marked',
-  maybe: 'maybe',
-  'maybe-mark': 'maybe-mark',
+/**
+ * Pen or pencil. Both tools paint either way, so there are two tools and one
+ * mode rather than four tools: in pencil the same Fill and Mark lay down
+ * tentative cells, which is what a hypothesis is made of - the cells it
+ * forces filled *and* the ones it forces empty.
+ */
+const TOOL_STATE: Record<'pen' | 'pencil', Record<Tool, CellState>> = {
+  pen: { fill: 'filled', mark: 'marked' },
+  pencil: { fill: 'maybe', mark: 'maybe-mark' },
 }
 
 /** What each tentative state becomes once the hypothesis is committed. */
@@ -24,20 +27,8 @@ const COMMITTED_STATE: Record<'maybe' | 'maybe-mark', CellState> = {
 // Icon and word are separate so narrow screens can drop the word without
 // changing the toolbar's height (see the phone media query in App.css).
 const TOOLS: { id: Tool; icon: string; label: string; hint: string }[] = [
-  { id: 'fill', icon: '▉', label: 'Fill', hint: 'Fill a cell for real. A wrong fill counts as a mistake.' },
-  { id: 'mark', icon: '✕', label: 'Mark', hint: 'Mark a cell as definitely empty.' },
-  {
-    id: 'maybe',
-    icon: '?▉',
-    label: 'Maybe fill',
-    hint: 'Pencil in a tentative fill while you test an assumption. Costs nothing if you are wrong.',
-  },
-  {
-    id: 'maybe-mark',
-    icon: '?✕',
-    label: 'Maybe X',
-    hint: 'Pencil in a tentative X while you test an assumption. Costs nothing if you are wrong.',
-  },
+  { id: 'fill', icon: '■', label: 'Fill', hint: 'Fill a cell. A wrong fill counts as a mistake.' },
+  { id: 'mark', icon: '✕', label: 'Mark', hint: 'Mark a cell as empty.' },
 ]
 
 interface GridProps {
@@ -61,6 +52,7 @@ const hoverCapable =
 
 export function Grid({ puzzle, grid, onChange, onMistake, onWin, disabled }: GridProps) {
   const [tool, setTool] = useState<Tool>('fill')
+  const [pencil, setPencil] = useState(false)
   const [hovered, setHovered] = useState<{ r: number; c: number } | null>(null)
   const paintRef = useRef<PaintAction | null>(null)
   const wonRef = useRef(false)
@@ -116,9 +108,11 @@ export function Grid({ puzzle, grid, onChange, onMistake, onWin, disabled }: Gri
     return found
   }, [grid])
 
-  const applyToCell = (r: number, c: number, action: PaintAction) => {
+  const painting: CellState = TOOL_STATE[pencil ? 'pencil' : 'pen'][tool]
+
+  const applyToCell = (r: number, c: number, action: PaintAction, state: CellState = painting) => {
     const current = grid[r][c]
-    const targetState: CellState = action === 'clear' ? 'empty' : TOOL_STATE[tool]
+    const targetState: CellState = action === 'clear' ? 'empty' : state
     if (current === targetState) return
 
     const next = cloneGrid(grid)
@@ -164,9 +158,7 @@ export function Grid({ puzzle, grid, onChange, onMistake, onWin, disabled }: Gri
 
   const startPaint = (r: number, c: number) => {
     if (disabled) return
-    const current = grid[r][c]
-    const applying = TOOL_STATE[tool]
-    const action: PaintAction = current === applying ? 'clear' : 'set'
+    const action: PaintAction = grid[r][c] === painting ? 'clear' : 'set'
     paintRef.current = action
     applyToCell(r, c, action)
   }
@@ -183,14 +175,14 @@ export function Grid({ puzzle, grid, onChange, onMistake, onWin, disabled }: Gri
   return (
     <div className="nonogram">
       <div className="toolbar-row">
-        <div className="toolbar" role="group" aria-label="Drawing tool">
+        <div className={pencil ? 'toolbar pencil' : 'toolbar'} role="group" aria-label="Drawing tool">
           {TOOLS.map((t) => (
             <button
               key={t.id}
               type="button"
               className={tool === t.id ? 'tool active' : 'tool'}
               data-tool={t.id}
-              title={t.hint}
+              title={pencil ? `${t.hint.replace(/.$/, '')}, pencilled in until you commit it.` : t.hint}
               aria-pressed={tool === t.id}
               aria-label={t.label}
               onClick={() => setTool(t.id)}
@@ -201,6 +193,23 @@ export function Grid({ puzzle, grid, onChange, onMistake, onWin, disabled }: Gri
               <span className="tool-label">{t.label}</span>
             </button>
           ))}
+
+          <button
+            type="button"
+            className={pencil ? 'tool pencil-toggle active' : 'tool pencil-toggle'}
+            data-tool="pencil"
+            title="Pencil: everything you draw stays tentative until you commit it. Costs nothing if the assumption is wrong."
+            aria-pressed={pencil}
+            aria-label="Pencil"
+            onClick={() => setPencil((p) => !p)}
+          >
+            <span className="tool-icon" aria-hidden="true">
+              {/* Text presentation, so the glyph takes the tentative colour
+                  instead of rendering as a colour emoji. */}
+              {'✎︎'}
+            </span>
+            <span className="tool-label">Pencil</span>
+          </button>
         </div>
 
         {maybeCells.length > 0 && !disabled && (
@@ -319,12 +328,10 @@ export function Grid({ puzzle, grid, onChange, onMistake, onWin, disabled }: Gri
                 }}
                 onContextMenu={(e) => {
                   e.preventDefault()
-                  const applying: CellState = 'marked'
+                  // Right-click always marks, in whichever ink is loaded.
+                  const applying = TOOL_STATE[pencil ? 'pencil' : 'pen'].mark
                   const action: PaintAction = grid[r][c] === applying ? 'clear' : 'set'
-                  const savedTool = tool
-                  setTool('mark')
-                  applyToCell(r, c, action)
-                  setTool(savedTool)
+                  applyToCell(r, c, action, applying)
                 }}
               />
             )),

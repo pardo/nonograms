@@ -803,35 +803,34 @@ body:has(.bg-settings-panel) .nonogram {
   color: var(--accent-ink);
 }
 
-/* The two tentative tools are deliberately off-palette from Fill and Mark, so
-   the mode you are in is obvious at a glance. They also keep the tentative
-   colour while idle, and sit behind a divider, so the toolbar reads as two
-   groups: what you commit, and what you only pencil in. */
-.tool[data-tool='maybe'] .tool-icon,
-.tool[data-tool='maybe-mark'] .tool-icon {
+/* Pencil is a mode, not a third tool, so it sits behind a divider and keeps
+   the tentative colour even while idle. When it is on, the selected tool
+   turns that same colour: the toolbar then says what the next stroke will
+   actually lay down, tentative rather than committed. */
+.pencil-toggle {
+  margin-left: 0.45rem;
+}
+
+.pencil-toggle::before {
+  content: '';
+  align-self: stretch;
+  width: 1px;
+  margin: 0.15rem 0.45rem 0.15rem -0.5rem;
+  background: var(--border);
+}
+
+.pencil-toggle .tool-icon {
   color: var(--maybe);
 }
 
-.tool[data-tool='maybe'].active,
-.tool[data-tool='maybe-mark'].active {
+.pencil-toggle.active,
+.toolbar.pencil .tool.active {
   background: var(--maybe);
   color: var(--accent-ink);
 }
 
 .tool.active .tool-icon {
   color: inherit;
-}
-
-.tool[data-tool='maybe'] {
-  margin-left: 0.45rem;
-}
-
-.tool[data-tool='maybe']::before {
-  content: '';
-  align-self: stretch;
-  width: 1px;
-  margin: 0.15rem 0.45rem 0.15rem -0.5rem;
-  background: var(--border);
 }
 
 .maybe-actions {
@@ -1005,15 +1004,15 @@ body:has(.bg-settings-panel) .nonogram {
    guide lines, which is what you actually count by. */
 .cell.filled {
   background: var(--ink);
-  border-color: color-mix(in srgb, var(--bg) 20%, transparent);
+  border-color: color-mix(in srgb, var(--bg) 12%, transparent);
 }
 
 .cell.filled.border-r {
-  border-right-color: color-mix(in srgb, var(--bg) 50%, transparent);
+  border-right-color: color-mix(in srgb, var(--bg) 32%, transparent);
 }
 
 .cell.filled.border-b {
-  border-bottom-color: color-mix(in srgb, var(--bg) 50%, transparent);
+  border-bottom-color: color-mix(in srgb, var(--bg) 32%, transparent);
 }
 
 /* Tentative fill: reads as a fill, but hollow and dashed so it never gets
